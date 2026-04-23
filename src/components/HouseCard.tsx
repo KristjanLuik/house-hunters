@@ -1,4 +1,4 @@
-import type { House, Place, Route } from '../types';
+import type { House, Place, Route, TravelMode } from '../types';
 import { STATUS_COLORS, STATUS_LABELS } from '../lib/statusColors';
 import PhotoCarousel from './PhotoCarousel';
 import placesData from '../data/places.json';
@@ -24,6 +24,7 @@ interface HouseCardProps {
   house: House;
   isFocused: boolean;
   onClick: () => void;
+  routeMode: TravelMode;
 }
 
 const ENERGY_COLORS: Record<string, string> = {
@@ -37,7 +38,7 @@ const ENERGY_COLORS: Record<string, string> = {
   H: '#7f1d1d',
 };
 
-export default function HouseCard({ house, isFocused, onClick }: HouseCardProps) {
+export default function HouseCard({ house, isFocused, onClick, routeMode }: HouseCardProps) {
   const photos = house.photos ?? [];
   return (
     <div
@@ -136,7 +137,10 @@ export default function HouseCard({ house, isFocused, onClick }: HouseCardProps)
           const walk = routes.find(
             (r) => r.houseId === house.id && r.placeId === place.id && r.mode === 'foot-walking',
           );
-          if (!drive && !walk) return null;
+          const bike = routes.find(
+            (r) => r.houseId === house.id && r.placeId === place.id && r.mode === 'cycling-regular',
+          );
+          if (!drive && !walk && !bike) return null;
           return (
             <div
               key={place.id}
@@ -154,8 +158,39 @@ export default function HouseCard({ house, isFocused, onClick }: HouseCardProps)
                 {place.name}
               </span>
               <span className="text-gray-600 tabular-nums shrink-0">
-                {drive && <span>🚗{formatDuration(drive.duration_s)}</span>}
-                {walk && <span className="ml-1">🚶{formatDuration(walk.duration_s)}</span>}
+                {drive && (
+                  <span
+                    className={
+                      routeMode === 'driving-car'
+                        ? 'font-semibold text-gray-900'
+                        : ''
+                    }
+                  >
+                    🚗{formatDuration(drive.duration_s)}
+                  </span>
+                )}
+                {bike && (
+                  <span
+                    className={`ml-1 ${
+                      routeMode === 'cycling-regular'
+                        ? 'font-semibold text-gray-900'
+                        : ''
+                    }`}
+                  >
+                    🚲{formatDuration(bike.duration_s)}
+                  </span>
+                )}
+                {walk && (
+                  <span
+                    className={`ml-1 ${
+                      routeMode === 'foot-walking'
+                        ? 'font-semibold text-gray-900'
+                        : ''
+                    }`}
+                  >
+                    🚶{formatDuration(walk.duration_s)}
+                  </span>
+                )}
               </span>
             </div>
           );

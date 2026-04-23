@@ -7,7 +7,7 @@ export type HouseStatus =
 
 export type EnergyClass = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H';
 
-export type TravelMode = 'driving-car' | 'foot-walking';
+export type TravelMode = 'driving-car' | 'foot-walking' | 'cycling-regular';
 
 export interface Place {
   id: string;
@@ -29,6 +29,12 @@ export interface Route {
     type: 'LineString';
     coordinates: [number, number][];
   };
+  // Coordinate fingerprint written by scripts/fetch-routes.mjs. Used only by
+  // that script to skip re-fetching when endpoints haven't moved.
+  houseLat?: number;
+  houseLng?: number;
+  placeLat?: number;
+  placeLng?: number;
 }
 
 export interface House {

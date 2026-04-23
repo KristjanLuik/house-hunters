@@ -8,7 +8,7 @@ import {
   useMap,
 } from 'react-leaflet';
 import type { Marker as LeafletMarker } from 'leaflet';
-import type { House, Place, Route } from '../types';
+import type { House, Place, Route, TravelMode } from '../types';
 import { getMarkerIcon, getPlaceIcon } from '../lib/markerIcon';
 import PhotoCarousel from './PhotoCarousel';
 import placesData from '../data/places.json';
@@ -23,6 +23,7 @@ const placesById: Record<string, Place> = Object.fromEntries(
 interface MapProps {
   houses: House[];
   focusedId: string | null;
+  routeMode: TravelMode;
 }
 
 const INITIAL_CENTER: [number, number] = [59.447, 24.729];
@@ -55,15 +56,15 @@ function MapController({
   return null;
 }
 
-export default function Map({ houses, focusedId }: MapProps) {
+export default function Map({ houses, focusedId, routeMode }: MapProps) {
   const markerRefs = useRef<Record<string, LeafletMarker>>({});
 
   const focusedRoutes = useMemo(
     () =>
       focusedId
-        ? routes.filter((r) => r.houseId === focusedId && r.mode === 'driving-car')
+        ? routes.filter((r) => r.houseId === focusedId && r.mode === routeMode)
         : [],
-    [focusedId],
+    [focusedId, routeMode],
   );
 
   return (

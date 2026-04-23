@@ -13,18 +13,57 @@ if (!KEY) {
   process.exit(1);
 }
 
-const MODES = ['driving-car', 'foot-walking'];
+const MODES = ['driving-car', 'foot-walking', 'cycling-regular'];
 const DELAY_MS = 500;
 
 const houses = JSON.parse(await readFile(resolve(dataDir, 'houses.json'), 'utf8'));
 const places = JSON.parse(await readFile(resolve(dataDir, 'places.json'), 'utf8'));
+const routesPath = resolve(dataDir, 'routes.json');
+
+// Treat routes.json as the cache. Reuse an entry when the embedded coordinate
+// fingerprint still matches the current house + place coords. Legacy entries
+// (written before the fingerprint existed) are trusted on a one-time migration
+// so an upgrade doesn't force a full re-fetch.
+const cache = new Map();
+try {
+  const existing = JSON.parse(await readFile(routesPath, 'utf8'));
+  for (const r of existing) {
+    cache.set(`${r.houseId}|${r.placeId}|${r.mode}`, r);
+  }
+} catch {
+  // No cache file yet — first run.
+}
 
 const out = [];
 const failures = [];
+let fetched = 0;
+let reused = 0;
 
 for (const house of houses) {
   for (const place of places) {
     for (const mode of MODES) {
+      const key = `${house.id}|${place.id}|${mode}`;
+      const hit = cache.get(key);
+      const legacy = hit && hit.houseLat == null;
+      const matches =
+        hit &&
+        hit.houseLat === house.lat &&
+        hit.houseLng === house.lng &&
+        hit.placeLat === place.lat &&
+        hit.placeLng === place.lng;
+
+      if (hit && (legacy || matches)) {
+        out.push({
+          ...hit,
+          houseLat: house.lat,
+          houseLng: house.lng,
+          placeLat: place.lat,
+          placeLng: place.lng,
+        });
+        reused++;
+        continue;
+      }
+
       const url = `https://api.openrouteservice.org/v2/directions/${mode}/geojson`;
       try {
         const res = await fetch(url, {
@@ -56,9 +95,14 @@ for (const house of houses) {
           distance_m: distance,
           duration_s: duration,
           geometry: feat.geometry,
+          houseLat: house.lat,
+          houseLng: house.lng,
+          placeLat: place.lat,
+          placeLng: place.lng,
         });
+        fetched++;
         console.log(
-          `OK  ${house.id} → ${place.id} (${mode}): ${distance.toFixed(0)}m ${duration.toFixed(0)}s`,
+          `FETCH ${house.id} → ${place.id} (${mode}): ${distance.toFixed(0)}m ${duration.toFixed(0)}s`,
         );
       } catch (err) {
         failures.push({ houseId: house.id, placeId: place.id, mode, err: String(err) });
@@ -69,9 +113,10 @@ for (const house of houses) {
   }
 }
 
-const outPath = resolve(dataDir, 'routes.json');
-await writeFile(outPath, JSON.stringify(out));
-console.log(`\nWrote ${out.length} routes to ${outPath}`);
+await writeFile(routesPath, JSON.stringify(out));
+console.log(
+  `\n${fetched} fetched, ${reused} reused from cache, ${out.length} total → ${routesPath}`,
+);
 if (failures.length) {
   console.error(`${failures.length} failed:`);
   for (const f of failures) console.error(`  ${f.houseId} → ${f.placeId} (${f.mode}): ${f.err}`);

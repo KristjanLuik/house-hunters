@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import type { Filters, House } from './types';
+import type { Filters, House, TravelMode } from './types';
 import { ALL_STATUSES } from './lib/statusColors';
 import Map from './components/Map';
 import Sidebar from './components/Sidebar';
@@ -14,6 +14,7 @@ export default function App() {
     maxPrice: null,
   });
   const [focusedId, setFocusedId] = useState<string | null>(null);
+  const [routeMode, setRouteMode] = useState<TravelMode>('driving-car');
 
   const visibleHouses = useMemo(() => {
     return houses.filter((h) => {
@@ -33,9 +34,11 @@ export default function App() {
         onFiltersChange={setFilters}
         onHouseClick={(id) => setFocusedId(id)}
         focusedId={focusedId}
+        routeMode={routeMode}
+        onRouteModeChange={setRouteMode}
       />
       <div className="w-[65%] h-full">
-        <Map houses={visibleHouses} focusedId={focusedId} />
+        <Map houses={visibleHouses} focusedId={focusedId} routeMode={routeMode} />
       </div>
     </div>
   );
