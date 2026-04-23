@@ -1,4 +1,5 @@
-# House Hunters
+# House Hunters 🏡
+
 
 A small, static site for tracking houses I'm considering buying. Map on the right, filterable sidebar list on the left. All data lives in a single JSON file.
 
