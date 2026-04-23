@@ -1,0 +1,29 @@
+[
+  {
+    "id": "kindergarten",
+    "name": "Kindergarten",
+    "category": "kindergarten",
+    "emoji": "🏫",
+    "color": "#f59e0b",
+    "lat": 59.44791429296823,
+    "lng": 24.735700278670887
+  },
+  {
+    "id": "work-k",
+    "name": "Work K",
+    "category": "work",
+    "emoji": "💼",
+    "color": "#0ea5e9",
+    "lat": 59.440167,
+    "lng": 24.731778
+  },
+  {
+    "id": "work-b",
+    "name": "Work B",
+    "category": "work",
+    "emoji": "💼",
+    "color": "#a855f7",
+    "lat": 59.438487,
+    "lng": 24.790939
+  }
+]

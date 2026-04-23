@@ -1,0 +1,23 @@
+@import 'leaflet/dist/leaflet.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Hide the default leaflet divIcon background/border so our custom circle
+   isn't wrapped in an extra box. */
+.house-marker {
+  background: transparent;
+  border: none;
+}
