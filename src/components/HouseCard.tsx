@@ -1,6 +1,6 @@
 import type { House, Place, Route, TravelMode } from '../types';
-import { STATUS_COLORS, STATUS_LABELS } from '../lib/statusColors';
-import PhotoCarousel from './PhotoCarousel';
+import { STATUS_COLORS, STATUS_SHORT } from '../lib/statusColors';
+import { fmtPrice, fmtPerSqm, fmtSqm } from '../lib/format';
 import placesData from '../data/places.json';
 import routesData from '../data/routes.json';
 
@@ -15,31 +15,49 @@ function formatDuration(seconds: number): string {
   return rem ? `${h}h${rem}` : `${h}h`;
 }
 
-function formatDistance(meters: number): string {
-  if (meters < 1000) return `${Math.round(meters)}m`;
-  return `${(meters / 1000).toFixed(1)}km`;
-}
+const ENERGY_COLORS: Record<string, string> = {
+  A: '#4a6b52',
+  B: '#4a6b52',
+  C: '#6a7d52',
+  D: '#b8894a',
+  E: '#b8894a',
+  F: '#a05a3a',
+  G: '#a05a3a',
+  H: '#7a3528',
+};
 
 interface HouseCardProps {
   house: House;
-  isFocused: boolean;
+  index: number;
+  isSelected: boolean;
   onClick: () => void;
   routeMode: TravelMode;
+  isComparing: boolean;
+  onToggleCompare: () => void;
 }
 
-const ENERGY_COLORS: Record<string, string> = {
-  A: '#16a34a',
-  B: '#65a30d',
-  C: '#84cc16',
-  D: '#eab308',
-  E: '#f97316',
-  F: '#ef4444',
-  G: '#b91c1c',
-  H: '#7f1d1d',
-};
+export default function HouseCard({
+  house,
+  index,
+  isSelected,
+  onClick,
+  routeMode,
+  isComparing,
+  onToggleCompare,
+}: HouseCardProps) {
+  const photo = house.photos?.[0];
+  const modeRoute = places
+    .map((place) => {
+      const r = routes.find(
+        (rt) =>
+          rt.houseId === house.id &&
+          rt.placeId === place.id &&
+          rt.mode === routeMode,
+      );
+      return r ? { place, route: r } : null;
+    })
+    .filter((x): x is { place: Place; route: Route } => x !== null);
 
-export default function HouseCard({ house, isFocused, onClick, routeMode }: HouseCardProps) {
-  const photos = house.photos ?? [];
   return (
     <div
       role="button"
@@ -51,150 +69,116 @@ export default function HouseCard({ house, isFocused, onClick, routeMode }: Hous
           onClick();
         }
       }}
-      className={`w-full text-left bg-white rounded-lg border shadow-sm hover:shadow-md transition overflow-hidden cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 ${
-        isFocused ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200'
+      className={`group relative grid gap-3 lg:gap-[18px] px-4 lg:px-8 py-[14px] lg:py-[18px] border-b border-[#e3d7ab] cursor-pointer focus:outline-none ${
+        isSelected ? 'bg-[#e6dcab]' : 'hover:bg-[#ebe4bf]'
       }`}
+      style={{ gridTemplateColumns: '76px minmax(0, 1fr) auto' }}
     >
-      <div className="flex gap-3 p-3">
-        {photos.length > 0 && (
-          <div className="w-20 h-20 shrink-0">
-            <PhotoCarousel
-              photos={photos}
-              alt={house.nickname}
-              heightClass="h-20"
-              stopPropagation
-            />
+      <div className="absolute left-[6px] lg:left-[10px] top-[14px] lg:top-[18px] font-pixel text-[8px] text-[#a89970] tracking-[0.5px]">
+        {String(index + 1).padStart(2, '0')}
+      </div>
+
+      {photo ? (
+        <img
+          src={photo}
+          alt=""
+          className="w-[76px] h-[76px] lg:w-[88px] lg:h-[88px] object-cover bg-[#ddd0a8]"
+        />
+      ) : (
+        <div className="w-[76px] h-[76px] lg:w-[88px] lg:h-[88px] bg-[#ddd0a8]" />
+      )}
+
+      <div className="flex flex-col justify-between min-w-0">
+        <div className="min-w-0">
+          <div
+            className="font-[500] leading-[1.1] mb-[2px] truncate text-[17px] lg:text-[20px]"
+            style={{ letterSpacing: '-0.4px' }}
+          >
+            {house.nickname}
           </div>
-        )}
-        <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <div className="font-semibold text-sm leading-tight truncate">
-                {house.nickname}
-              </div>
-              <div className="text-xs text-gray-500 leading-snug truncate">
-                {house.address}
-              </div>
-            </div>
-            <span
-              className="shrink-0 inline-flex items-center gap-1 text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded"
-              style={{
-                backgroundColor: STATUS_COLORS[house.status] + '22',
-                color: STATUS_COLORS[house.status],
-              }}
-            >
+          <div className="text-[11px] lg:text-[12px] text-[#7a6d52] truncate mb-[8px] lg:mb-[10px]">
+            {house.address}
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-x-2 gap-y-0.5 text-[11.5px] font-[500] text-[#5a4f3a] tabular-nums">
+          <span>{house.rooms} rm</span>
+          <span className="text-[#c9b995]">·</span>
+          <span>{fmtSqm(house.sqm)}</span>
+          <span className="text-[#c9b995]">·</span>
+          <span>{house.yearBuilt}</span>
+          {house.energyClass && (
+            <>
+              <span className="text-[#c9b995]">·</span>
               <span
-                className="w-1.5 h-1.5 rounded-full"
-                style={{ backgroundColor: STATUS_COLORS[house.status] }}
-              />
-              {STATUS_LABELS[house.status]}
-            </span>
-          </div>
-          <div className="mt-1 flex items-baseline gap-2">
-            <div className="text-base font-bold">€{house.price.toLocaleString()}</div>
-            <div className="text-[11px] text-gray-500">
-              €{house.pricePerSqm.toLocaleString()}/m²
-            </div>
-          </div>
-          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-gray-600">
-            <span>{house.rooms} rooms</span>
-            <span>·</span>
-            <span>{house.sqm} m²</span>
-            <span>·</span>
-            <span>
-              floor {house.floor}/{house.totalFloors}
-            </span>
-            <span>·</span>
-            <span>{house.yearBuilt}</span>
-            <span
-              className="ml-auto inline-flex items-center justify-center w-5 h-5 rounded text-white text-[10px] font-bold"
-              style={{
-                backgroundColor: house.energyClass
-                  ? ENERGY_COLORS[house.energyClass] || '#6b7280'
-                  : '#9ca3af',
-              }}
-              title={
-                house.energyClass
-                  ? `Energy class ${house.energyClass}`
-                  : 'Energy class unknown'
-              }
-            >
-              {house.energyClass ?? '🤷'}
-            </span>
-          </div>
+                style={{ color: ENERGY_COLORS[house.energyClass] ?? '#5a4f3a' }}
+                className="font-[600]"
+              >
+                {house.energyClass}
+              </span>
+            </>
+          )}
+          {modeRoute.length > 0 && (
+            <>
+              <span className="text-[#c9b995]">·</span>
+              <span className="flex items-center gap-1.5">
+                {modeRoute.map(({ place, route }) => (
+                  <span
+                    key={place.id}
+                    className="inline-flex items-center gap-0.5"
+                    title={`${place.name} · ${route.duration_s}s`}
+                  >
+                    <span
+                      className="inline-block w-[6px] h-[6px]"
+                      style={{ background: place.color }}
+                    />
+                    {formatDuration(route.duration_s)}
+                  </span>
+                ))}
+              </span>
+            </>
+          )}
         </div>
       </div>
-      {house.notes && (
-        <div className="px-3 pb-2 text-xs text-gray-700 line-clamp-2">
-          {house.notes}
+
+      <div className="flex flex-col items-end justify-between">
+        <div>
+          <div
+            className="font-[600] text-right tabular-nums text-[18px] lg:text-[22px]"
+            style={{ letterSpacing: '-0.6px', lineHeight: 1 }}
+          >
+            {fmtPrice(house.price)}
+          </div>
+          <div className="font-pixel text-[9px] text-[#8a7858] tracking-[1px] mt-[6px] text-right">
+            {fmtPerSqm(house.pricePerSqm)}
+          </div>
         </div>
-      )}
-      <div className="px-3 pb-3 space-y-0.5">
-        {places.map((place) => {
-          const drive = routes.find(
-            (r) => r.houseId === house.id && r.placeId === place.id && r.mode === 'driving-car',
-          );
-          const walk = routes.find(
-            (r) => r.houseId === house.id && r.placeId === place.id && r.mode === 'foot-walking',
-          );
-          const bike = routes.find(
-            (r) => r.houseId === house.id && r.placeId === place.id && r.mode === 'cycling-regular',
-          );
-          if (!drive && !walk && !bike) return null;
-          return (
-            <div
-              key={place.id}
-              className="flex items-center gap-1.5 text-[11px] whitespace-nowrap"
-              title={drive ? formatDistance(drive.distance_m) : ''}
-            >
-              <span
-                className="inline-block w-2 h-2 rounded-full shrink-0"
-                style={{ backgroundColor: place.color }}
-              />
-              <span className="shrink-0" aria-label={place.name}>
-                {place.emoji}
-              </span>
-              <span className="text-gray-700 truncate flex-1 min-w-0">
-                {place.name}
-              </span>
-              <span className="text-gray-600 tabular-nums shrink-0">
-                {drive && (
-                  <span
-                    className={
-                      routeMode === 'driving-car'
-                        ? 'font-semibold text-gray-900'
-                        : ''
-                    }
-                  >
-                    🚗{formatDuration(drive.duration_s)}
-                  </span>
-                )}
-                {bike && (
-                  <span
-                    className={`ml-1 ${
-                      routeMode === 'cycling-regular'
-                        ? 'font-semibold text-gray-900'
-                        : ''
-                    }`}
-                  >
-                    🚲{formatDuration(bike.duration_s)}
-                  </span>
-                )}
-                {walk && (
-                  <span
-                    className={`ml-1 ${
-                      routeMode === 'foot-walking'
-                        ? 'font-semibold text-gray-900'
-                        : ''
-                    }`}
-                  >
-                    🚶{formatDuration(walk.duration_s)}
-                  </span>
-                )}
-              </span>
-            </div>
-          );
-        })}
+        <div className="flex items-center gap-[10px]">
+          <div
+            className="inline-flex items-center gap-[5px] font-pixel text-[8px] uppercase tracking-[1.3px] px-[7px] py-[3px] bg-white/30 text-[#3d3528]"
+            style={{ border: '1px solid #c9b995' }}
+          >
+            <span
+              className="inline-block w-[6px] h-[6px]"
+              style={{ background: STATUS_COLORS[house.status] }}
+            />
+            {STATUS_SHORT[house.status]}
+          </div>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleCompare();
+            }}
+            aria-pressed={isComparing}
+            className={`w-[20px] h-[20px] flex items-center justify-center text-[12px] font-bold ${
+              isComparing
+                ? 'bg-[#2a261c] text-[#f2ecd9] border-0'
+                : 'bg-transparent text-[#8a7858] border border-[#8a7858]'
+            }`}
+          >
+            {isComparing ? '✓' : '+'}
+          </button>
+        </div>
       </div>
     </div>
   );

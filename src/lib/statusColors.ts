@@ -1,11 +1,11 @@
 import type { HouseStatus } from '../types';
 
 export const STATUS_COLORS: Record<HouseStatus, string> = {
-  interested: '#3b82f6',
-  'viewing-scheduled': '#eab308',
-  visited: '#22c55e',
-  'offer-made': '#a855f7',
-  rejected: '#6b7280',
+  interested: '#7a7266',
+  'viewing-scheduled': '#b8894a',
+  visited: '#4a6b52',
+  'offer-made': '#2a261c',
+  rejected: '#a89970',
 };
 
 export const STATUS_LABELS: Record<HouseStatus, string> = {
@@ -14,6 +14,14 @@ export const STATUS_LABELS: Record<HouseStatus, string> = {
   visited: 'Visited',
   'offer-made': 'Offer made',
   rejected: 'Rejected',
+};
+
+export const STATUS_SHORT: Record<HouseStatus, string> = {
+  interested: 'TRACK',
+  'viewing-scheduled': 'VISIT',
+  visited: 'SEEN',
+  'offer-made': 'OFFER',
+  rejected: 'NOPE',
 };
 
 export const ALL_STATUSES: HouseStatus[] = [

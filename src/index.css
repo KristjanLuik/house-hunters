@@ -4,6 +4,32 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --paper-bg: #f2ecd9;
+  --paper-land: #ede5d0;
+  --paper-panel: #eae2c4;
+  --paper-row-hover: #ebe4bf;
+  --paper-row-sel: #e6dcab;
+  --paper-border: #d6c99e;
+  --paper-border-lt: #e3d7ab;
+  --paper-map-bg: #f1ebdb;
+
+  --ink: #2a261c;
+  --ink-2: #3d3528;
+  --ink-3: #5a4f3a;
+  --muted: #7a6d52;
+  --muted-pixel: #8a7858;
+  --muted-lt: #a89970;
+  --divider-warm: #c9b995;
+
+  --accent-gold: #b8894a;
+  --accent-green: #4a6b52;
+  --accent-neutral: #7a7266;
+
+  --font-body: 'Space Grotesk', -apple-system, system-ui, sans-serif;
+  --font-pixel: 'Silkscreen', monospace;
+}
+
 html,
 body,
 #root {
@@ -12,12 +38,54 @@ body,
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--font-body);
+  background: var(--paper-bg);
+  color: var(--ink);
 }
 
-/* Hide the default leaflet divIcon background/border so our custom circle
-   isn't wrapped in an extra box. */
-.house-marker {
+.font-pixel {
+  font-family: var(--font-pixel);
+  font-weight: 400;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+.house-marker,
+.place-marker {
   background: transparent;
   border: none;
+}
+
+.leaflet-container {
+  background: var(--paper-map-bg);
+  font-family: var(--font-body);
+}
+
+/* Warm the OSM tiles into the paper palette. Filter only the tile-pane so
+   markers, polylines, popups, and our detail card stay full-color. */
+.leaflet-tile-pane {
+  filter: sepia(0.15) saturate(0.9) hue-rotate(-4deg);
+}
+
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  background: var(--paper-bg);
+  color: var(--ink);
+  border-radius: 0;
+  box-shadow: 4px 4px 0 rgba(42, 38, 28, 0.15);
+}
+
+.leaflet-popup-content-wrapper {
+  border: 1px solid var(--ink);
+}
+
+/* Hide scrollbar for horizontal photo reels on compact areas. */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

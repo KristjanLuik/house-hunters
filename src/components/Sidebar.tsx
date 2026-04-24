@@ -1,6 +1,6 @@
 import type { Filters, House, TravelMode } from '../types';
 import FilterBar from './FilterBar';
-import HouseCard from './HouseCard';
+import HouseList from './HouseList';
 
 interface SidebarProps {
   houses: House[];
@@ -8,16 +8,11 @@ interface SidebarProps {
   filters: Filters;
   onFiltersChange: (filters: Filters) => void;
   onHouseClick: (id: string) => void;
-  focusedId: string | null;
+  selectedId: string | null;
   routeMode: TravelMode;
-  onRouteModeChange: (mode: TravelMode) => void;
+  compareSet: Set<string>;
+  onToggleCompare: (id: string) => void;
 }
-
-const MODE_OPTIONS: { mode: TravelMode; emoji: string; label: string }[] = [
-  { mode: 'driving-car', emoji: '🚗', label: 'Drive' },
-  { mode: 'cycling-regular', emoji: '🚲', label: 'Bike' },
-  { mode: 'foot-walking', emoji: '🚶', label: 'Walk' },
-];
 
 export default function Sidebar({
   houses,
@@ -25,56 +20,65 @@ export default function Sidebar({
   filters,
   onFiltersChange,
   onHouseClick,
-  focusedId,
+  selectedId,
   routeMode,
-  onRouteModeChange,
+  compareSet,
+  onToggleCompare,
 }: SidebarProps) {
   return (
-    <aside className="w-[35%] h-full flex flex-col border-r border-gray-200 bg-gray-50">
-      <header className="px-4 pt-4 pb-2 border-b border-gray-200 bg-white">
-        <div className="flex items-center justify-between gap-2">
-          <h1 className="text-lg font-semibold">House Hunters</h1>
-          <div className="inline-flex rounded border border-gray-300 overflow-hidden text-xs">
-            {MODE_OPTIONS.map((opt) => (
-              <button
-                key={opt.mode}
-                type="button"
-                onClick={() => onRouteModeChange(opt.mode)}
-                aria-pressed={routeMode === opt.mode}
-                title={opt.label}
-                className={`px-2 py-1 transition ${
-                  routeMode === opt.mode
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-white text-gray-600 hover:bg-gray-100'
-                }`}
-              >
-                {opt.emoji}
-              </button>
-            ))}
+    <aside className="flex flex-col bg-[#f2ecd9] overflow-hidden lg:w-[520px] lg:h-full lg:border-r lg:border-[#d6c99e] flex-shrink-0">
+      <header className="px-4 lg:px-8 pt-4 lg:pt-7 pb-3 lg:pb-[18px] border-b border-[#d6c99e]">
+        <div className="flex items-baseline justify-between mb-3 lg:mb-5 gap-2">
+          <div
+            className="font-[600] leading-none"
+            style={{ letterSpacing: '-0.8px' }}
+          >
+            <span className="text-[19px] lg:text-[24px]">House Hunter</span>
+            <span
+              className="font-pixel text-[10px] lg:text-[12px] text-[#b8894a] ml-2 tracking-[1px]"
+              style={{ verticalAlign: 2 }}
+            >
+              BETA
+            </span>
+          </div>
+          <div className="font-pixel text-[8px] lg:text-[9px] text-[#8a7858] tracking-[1.3px] lg:tracking-[1.5px] whitespace-nowrap">
+            {String(houses.length).padStart(2, '0')}/
+            {String(totalCount).padStart(2, '0')} · TALLINN
           </div>
         </div>
-        <FilterBar filters={filters} onChange={onFiltersChange} />
-        <div className="mt-2 text-xs text-gray-600">
-          Showing {houses.length} of {totalCount} houses
+        <div className="flex gap-4 lg:gap-6 overflow-x-auto no-scrollbar">
+          {[
+            { label: 'Listings', active: true },
+            { label: 'Compare', active: false },
+            { label: 'Notes', active: false },
+            { label: 'Calendar', active: false },
+          ].map((tab) => (
+            <div
+              key={tab.label}
+              className={`text-[12px] lg:text-[13px] py-[3px] cursor-pointer whitespace-nowrap ${
+                tab.active
+                  ? 'font-[600] text-[#2a261c] border-b-2 border-[#2a261c]'
+                  : 'font-[500] text-[#8a7858] border-b-2 border-transparent'
+              }`}
+              style={{ letterSpacing: '-0.1px' }}
+            >
+              {tab.label}
+            </div>
+          ))}
         </div>
       </header>
-      <div className="flex-1 overflow-y-auto p-3 space-y-3">
-        {houses.length === 0 ? (
-          <div className="text-sm text-gray-500 text-center mt-8">
-            No houses match the current filters.
-          </div>
-        ) : (
-          houses.map((house) => (
-            <HouseCard
-              key={house.id}
-              house={house}
-              isFocused={house.id === focusedId}
-              onClick={() => onHouseClick(house.id)}
-              routeMode={routeMode}
-            />
-          ))
-        )}
-      </div>
+
+      <FilterBar filters={filters} onChange={onFiltersChange} />
+
+      <HouseList
+        houses={houses}
+        selectedId={selectedId}
+        onHouseClick={onHouseClick}
+        routeMode={routeMode}
+        compareSet={compareSet}
+        onToggleCompare={onToggleCompare}
+        className="hidden lg:block lg:flex-1 lg:overflow-y-auto"
+      />
     </aside>
   );
 }
